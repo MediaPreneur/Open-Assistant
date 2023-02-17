@@ -181,8 +181,7 @@ async def get_flagged_messages(
 
     pr = PromptRepository(session, api_client)
     flagged_messages = pr.fetch_flagged_messages(max_count=max_count)
-    resp = [FlaggedMessageResponse(**msg.__dict__) for msg in flagged_messages]
-    return resp
+    return [FlaggedMessageResponse(**msg.__dict__) for msg in flagged_messages]
 
 
 @router.post("/admin/flagged_messages/{message_id}/processed", response_model=FlaggedMessageResponse)
@@ -195,5 +194,4 @@ async def process_flagged_messages(
 
     pr = PromptRepository(session, api_client)
     flagged_msg = pr.process_flagged_message(message_id=message_id)
-    resp = FlaggedMessageResponse(**flagged_msg.__dict__)
-    return resp
+    return FlaggedMessageResponse(**flagged_msg.__dict__)

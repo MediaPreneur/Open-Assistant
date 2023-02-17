@@ -92,8 +92,6 @@ class EssayReviser(DataAugmenter):
         nltk.download("omw-1.4")
 
     def parse_single(self, essay):
-        instructions = []
-
         # Make structure error (shuffle one paragraph with another)
         essay_paragraphs = essay.split("\n\n")  # Splitting a String by newline character (\n)
 
@@ -106,21 +104,19 @@ class EssayReviser(DataAugmenter):
 
         corrupted_essay = "\n\n".join(essay_paragraphs)
 
-        instructions.append("Fix structure errors in this essay" + corrupted_essay)
-
+        instructions = [f"Fix structure errors in this essay{corrupted_essay}"]
         essay_words = essay.split()
         for i in range(len(essay_words)):
             if random.randint(0, 100) < 30:
                 suggestion = []
                 for syn in wordnet.synsets(essay_words[i]):
-                    for l in syn.lemmas():
-                        suggestion.append(l.name())
+                    suggestion.extend(l.name() for l in syn.lemmas())
                 if suggestion != []:
                     essay_words[i] = suggestion[random.randint(0, len(suggestion) - 1)]
 
         corrupted_essay = " ".join(essay_words)
 
-        instructions.append("Fix grammar errors in this essay: " + corrupted_essay)
+        instructions.append(f"Fix grammar errors in this essay: {corrupted_essay}")
 
         # you can change the number 60 to change how much corrupted this essay will be
         for _ in range(len(essay) // 60):

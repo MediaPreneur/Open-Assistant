@@ -16,8 +16,7 @@ def oasst_api_client_mocked():
     Relies on ./scripts/backend-development/start-mock-server.sh
     being run.
     """
-    client = OasstApiClient(backend_url="http://localhost:8080", api_key="123")
-    yield client
+    yield OasstApiClient(backend_url="http://localhost:8080", api_key="123")
     # TODO The fixture should close this connection, but there seems to be a bug
     # with async fixtures and pytest.
     # Since this only results in a warning, I'm leaving this for now.
@@ -44,8 +43,11 @@ def oasst_api_client_fake_http(mock_http_session):
     """
     An oasst_api_client that uses a mocked http session. No real requests are made.
     """
-    client = OasstApiClient(backend_url="http://localhost:8080", api_key="123", session=mock_http_session)
-    yield client
+    yield OasstApiClient(
+        backend_url="http://localhost:8080",
+        api_key="123",
+        session=mock_http_session,
+    )
 
 
 @pytest.mark.asyncio

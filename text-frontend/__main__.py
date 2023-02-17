@@ -49,14 +49,17 @@ def main(backend_url: str = "http://127.0.0.1:8080", api_key: str = "1234"):
     tasks = [_post("/api/v1/tasks/", {"type": "random", "user": USER})]
     while tasks:
         task = tasks.pop(0)
-        match (task["type"]):
+        match task["type"]:
             case "summarize_story":
                 typer.echo("Summarize the following story:")
                 typer.echo(task["story"])
 
                 # acknowledge task
                 message_id = _random_message_id()
-                _post(f"/api/v1/tasks/{task['id']}/ack", {"message_id": message_id})
+                _post(
+                    f"/api/v1/tasks/{task['id']}/ack",
+                    {"message_id": message_id},
+                )
 
                 summary = typer.prompt("Enter your summary")
 
@@ -80,11 +83,16 @@ def main(backend_url: str = "http://127.0.0.1:8080", api_key: str = "1234"):
                 typer.echo(task["summary"])
                 typer.echo("Full text:")
                 typer.echo(task["full_text"])
-                typer.echo(f"Rating scale: {task['scale']['min']} - {task['scale']['max']}")
+                typer.echo(
+                    f"Rating scale: {task['scale']['min']} - {task['scale']['max']}"
+                )
 
                 # acknowledge task
                 message_id = _random_message_id()
-                _post(f"/api/v1/tasks/{task['id']}/ack", {"message_id": message_id})
+                _post(
+                    f"/api/v1/tasks/{task['id']}/ack",
+                    {"message_id": message_id},
+                )
 
                 rating = typer.prompt("Enter your rating", type=int)
                 # send interaction
@@ -99,12 +107,17 @@ def main(backend_url: str = "http://127.0.0.1:8080", api_key: str = "1234"):
                 )
                 tasks.append(new_task)
             case "initial_prompt":
-                typer.echo("Please provide an initial prompt to the assistant.")
+                typer.echo(
+                    "Please provide an initial prompt to the assistant."
+                )
                 if task["hint"]:
                     typer.echo(f"Hint: {task['hint']}")
                 # acknowledge task
                 message_id = _random_message_id()
-                _post(f"/api/v1/tasks/{task['id']}/ack", {"message_id": message_id})
+                _post(
+                    f"/api/v1/tasks/{task['id']}/ack",
+                    {"message_id": message_id},
+                )
                 prompt = typer.prompt("Enter your prompt")
                 user_message_id = _random_message_id()
                 # send interaction
@@ -130,7 +143,10 @@ def main(backend_url: str = "http://127.0.0.1:8080", api_key: str = "1234"):
                     typer.echo(f"Hint: {task['hint']}")
                 # acknowledge task
                 message_id = _random_message_id()
-                _post(f"/api/v1/tasks/{task['id']}/ack", {"message_id": message_id})
+                _post(
+                    f"/api/v1/tasks/{task['id']}/ack",
+                    {"message_id": message_id},
+                )
                 reply = typer.prompt("Enter your reply")
                 user_message_id = _random_message_id()
                 # send interaction
@@ -153,7 +169,10 @@ def main(backend_url: str = "http://127.0.0.1:8080", api_key: str = "1234"):
                     typer.echo(_render_message(message))
                 # acknowledge task
                 message_id = _random_message_id()
-                _post(f"/api/v1/tasks/{task['id']}/ack", {"message_id": message_id})
+                _post(
+                    f"/api/v1/tasks/{task['id']}/ack",
+                    {"message_id": message_id},
+                )
                 reply = typer.prompt("Enter your reply")
                 user_message_id = _random_message_id()
                 # send interaction
@@ -176,9 +195,14 @@ def main(backend_url: str = "http://127.0.0.1:8080", api_key: str = "1234"):
                     typer.echo(f"{idx}: {prompt}")
                 # acknowledge task
                 message_id = _random_message_id()
-                _post(f"/api/v1/tasks/{task['id']}/ack", {"message_id": message_id})
+                _post(
+                    f"/api/v1/tasks/{task['id']}/ack",
+                    {"message_id": message_id},
+                )
 
-                ranking_str = typer.prompt("Enter the prompt numbers in order of preference, separated by commas")
+                ranking_str = typer.prompt(
+                    "Enter the prompt numbers in order of preference, separated by commas"
+                )
                 ranking = [int(x) - 1 for x in ranking_str.split(",")]
 
                 # send ranking
@@ -202,9 +226,14 @@ def main(backend_url: str = "http://127.0.0.1:8080", api_key: str = "1234"):
                     typer.echo(f"{idx}: {reply}")
                 # acknowledge task
                 message_id = _random_message_id()
-                _post(f"/api/v1/tasks/{task['id']}/ack", {"message_id": message_id})
+                _post(
+                    f"/api/v1/tasks/{task['id']}/ack",
+                    {"message_id": message_id},
+                )
 
-                ranking_str = typer.prompt("Enter the reply numbers in order of preference, separated by commas")
+                ranking_str = typer.prompt(
+                    "Enter the reply numbers in order of preference, separated by commas"
+                )
                 ranking = [int(x) - 1 for x in ranking_str.split(",")]
 
                 # send labels
@@ -225,7 +254,10 @@ def main(backend_url: str = "http://127.0.0.1:8080", api_key: str = "1234"):
                 typer.echo(task["prompt"])
                 # acknowledge task
                 message_id = _random_message_id()
-                _post(f"/api/v1/tasks/{task['id']}/ack", {"message_id": message_id})
+                _post(
+                    f"/api/v1/tasks/{task['id']}/ack",
+                    {"message_id": message_id},
+                )
 
                 valid_labels = task["valid_labels"]
 
@@ -235,14 +267,25 @@ def main(backend_url: str = "http://127.0.0.1:8080", api_key: str = "1234"):
                     labels_dict = {valid_labels[0]: 1 if answer else 0}
                 else:
                     while labels_dict is None:
-                        labels_str: str = typer.prompt("Enter labels, separated by commas")
+                        labels_str: str = typer.prompt(
+                            "Enter labels, separated by commas"
+                        )
                         labels = labels_str.lower().replace(" ", "").split(",")
 
-                        if all([label in valid_labels for label in labels]):
-                            labels_dict = {label: "1" if label in labels else "0" for label in valid_labels}
+                        if all(label in valid_labels for label in labels):
+                            labels_dict = {
+                                label: "1" if label in labels else "0"
+                                for label in valid_labels
+                            }
                         else:
-                            invalid_labels = [label for label in labels if label not in valid_labels]
-                            typer.echo(f"Invalid labels: {', '.join(invalid_labels)}. Valid: {', '.join(valid_labels)}")
+                            invalid_labels = [
+                                label
+                                for label in labels
+                                if label not in valid_labels
+                            ]
+                            typer.echo(
+                                f"Invalid labels: {', '.join(invalid_labels)}. Valid: {', '.join(valid_labels)}"
+                            )
 
                 # send labels
                 new_task = _post(
@@ -267,7 +310,10 @@ def main(backend_url: str = "http://127.0.0.1:8080", api_key: str = "1234"):
                 typer.echo(task["reply"])
                 # acknowledge task
                 message_id = _random_message_id()
-                _post(f"/api/v1/tasks/{task['id']}/ack", {"message_id": message_id})
+                _post(
+                    f"/api/v1/tasks/{task['id']}/ack",
+                    {"message_id": message_id},
+                )
 
                 valid_labels = task["valid_labels"]
 
@@ -277,14 +323,25 @@ def main(backend_url: str = "http://127.0.0.1:8080", api_key: str = "1234"):
                     labels_dict = {valid_labels[0]: 1 if answer else 0}
                 else:
                     while labels_dict is None:
-                        labels_str: str = typer.prompt("Enter labels, separated by commas")
+                        labels_str: str = typer.prompt(
+                            "Enter labels, separated by commas"
+                        )
                         labels = labels_str.lower().replace(" ", "").split(",")
 
-                        if all([label in valid_labels for label in labels]):
-                            labels_dict = {label: "1" if label in labels else "0" for label in valid_labels}
+                        if all(label in valid_labels for label in labels):
+                            labels_dict = {
+                                label: "1" if label in labels else "0"
+                                for label in valid_labels
+                            }
                         else:
-                            invalid_labels = [label for label in labels if label not in valid_labels]
-                            typer.echo(f"Invalid labels: {', '.join(invalid_labels)}. Valid: {', '.join(valid_labels)}")
+                            invalid_labels = [
+                                label
+                                for label in labels
+                                if label not in valid_labels
+                            ]
+                            typer.echo(
+                                f"Invalid labels: {', '.join(invalid_labels)}. Valid: {', '.join(valid_labels)}"
+                            )
 
                 # send labels
                 new_task = _post(

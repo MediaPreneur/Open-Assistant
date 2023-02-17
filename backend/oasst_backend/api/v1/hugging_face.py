@@ -25,9 +25,7 @@ async def get_text_toxicity(
         ToxicityClassification: the score of toxicity of the message.
     """
 
-    api_url: str = HfUrl.HUGGINGFACE_TOXIC_CLASSIFICATION.value + "/" + HfClassificationModel.TOXIC_ROBERTA.value
+    api_url: str = f"{HfUrl.HUGGINGFACE_TOXIC_CLASSIFICATION.value}/{HfClassificationModel.TOXIC_ROBERTA.value}"
 
     hugging_face_api = HuggingFaceAPI(api_url)
-    response = await hugging_face_api.post(msg)
-
-    return response
+    return await hugging_face_api.post(msg)

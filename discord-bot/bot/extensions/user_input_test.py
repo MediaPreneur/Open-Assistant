@@ -269,7 +269,7 @@ async def rating_task(ctx: lightbulb.SlashContext):
     # Check if the ratings are valid
     if len(ratings) != 5:
         await ctx.respond("Invalid number of ratings")
-    if not all([rating in ("1", "2", "3", "4", "5") for rating in ratings]):
+    if any(rating not in ("1", "2", "3", "4", "5") for rating in ratings):
         await ctx.respond("Invalid rating")
 
     await ctx.respond(f"Your responses: {ratings}", flags=hikari.MessageFlag.EPHEMERAL)

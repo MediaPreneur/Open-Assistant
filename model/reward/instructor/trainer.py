@@ -37,8 +37,7 @@ class RankLoss(nn.Module):
         self.log_sigmoid = nn.LogSigmoid()
 
     def forward(self, pos, neg):
-        loss = -self.log_sigmoid(pos - neg + self.eps).mean()
-        return loss
+        return -self.log_sigmoid(pos - neg + self.eps).mean()
 
 
 class RankTrainer(Trainer):
@@ -128,8 +127,8 @@ if __name__ == "__main__":
         num_layer = training_conf["freeze_layer"]
         model = freeze_top_n_layers(model, num_layer)
         model_parameters = filter(lambda p: p.requires_grad, model.parameters())
-        params = sum([np.prod(p.size()) for p in model_parameters])
-        print("Number of trainable : {}M".format(int(params / 1e6)))
+        params = sum(np.prod(p.size()) for p in model_parameters)
+        print(f"Number of trainable : {int(params / 1000000.0)}M")
 
     optimizer = OptimizerNames.ADAMW_HF
     args = TrainingArguments(

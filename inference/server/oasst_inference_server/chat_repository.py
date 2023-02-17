@@ -37,8 +37,7 @@ class ChatRepository:
         query = sqlmodel.select(models.DbChatEntry).where(models.DbChatEntry.id == chat_id)
         if for_update:
             query = query.with_for_update()
-        chat = self.session.exec(query).one()
-        return chat
+        return self.session.exec(query).one()
 
     def get_chat_entry_by_id(self, chat_id: str) -> interface.ChatEntry:
         return self.get_chat_by_id(chat_id).to_entry()

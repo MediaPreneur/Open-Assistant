@@ -128,9 +128,9 @@ def get_messages_cursor(
     n, p = None, None
     if len(items) > 0:
         if (num_rows > max_count and before) or after:
-            p = str(items[0].id) + "$" + items[0].created_date.isoformat()
+            p = f"{str(items[0].id)}${items[0].created_date.isoformat()}"
         if num_rows > max_count or before:
-            n = str(items[-1].id) + "$" + items[-1].created_date.isoformat()
+            n = f"{str(items[-1].id)}${items[-1].created_date.isoformat()}"
     else:
         if after:
             p = lte_created_date.isoformat() if desc else gte_created_date.isoformat()

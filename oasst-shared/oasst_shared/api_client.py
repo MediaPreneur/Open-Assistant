@@ -96,10 +96,7 @@ class OasstApiClient:
                     HTTPStatus(response.status),
                 )
 
-        if response.status == 204:
-            # No content
-            return None
-        return await response.json()
+        return None if response.status == 204 else await response.json()
 
     def _parse_task(self, data: Optional[dict[str, t.Any]]) -> protocol_schema.Task:
         if data is None:

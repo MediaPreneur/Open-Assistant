@@ -71,10 +71,6 @@ class SummarizationDataset(Dataset):
         data = self.dataset[idx]
         text, summary = data[self.text_column], data[self.summary_column]
         text, summary = self.preprocess_fn(text, summary)
-        if self.name in SUMMARY_SPECIAL_PROMPT:
-            prompt = random.choice(SUMMARIZATION_SPECIAL_TOKENS["Summary"])
-        else:
-            prompt = random.choice(SUMMARIZATION_SPECIAL_TOKENS["Summary"])
-
+        prompt = random.choice(SUMMARIZATION_SPECIAL_TOKENS["Summary"])
         context = "".join([SUMMARIZATION_SPECIAL_TOKENS["Text"], " ".join(text.split(" ")[: self.max_words]), prompt])
         return format_pair((context, summary))

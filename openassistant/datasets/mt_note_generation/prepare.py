@@ -16,9 +16,7 @@ Rosey: {note}"""
 def preprocess(mt_dataset):
     def filter_for_notes(row):
         normalized_transcript = row["transcription"].lower()
-        if "chief complaint:" in normalized_transcript:
-            return True
-        return False
+        return "chief complaint:" in normalized_transcript
 
     mt_dataset = mt_dataset.dropna(subset=["description", "transcription"])
     mt_note_subset = mt_dataset[mt_dataset.apply(filter_for_notes, axis=1)]

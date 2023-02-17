@@ -58,10 +58,7 @@ class OAPrivate(Dataset):
             reply = random.choice(prompt["replies"])
             reply_text = reply["text"]
 
-            # only add if the reply exists
-            pairs.append(prompter_text)
-            pairs.append(reply_text)
-
+            pairs.extend((prompter_text, reply_text))
             if len(reply["replies"]) == 0:
                 break
 
@@ -201,7 +198,7 @@ class PrivateInstructionTuning(Dataset):
                 for line in f:
                     row = json.loads(line)
                     prefix = ""
-                    for _, convo in enumerate(row["text"].split("User:")):
+                    for convo in row["text"].split("User:"):
                         if "Assistant" in convo:
                             prompt, answer = convo.split("Assistant:", maxsplit=1)
                             answer = answer.replace("<|endoftext|>", "").strip()
@@ -213,4 +210,4 @@ class PrivateInstructionTuning(Dataset):
 
     def __getitem__(self, index):
         prompt, answer = self.pairs[index]
-        return "{}{}".format(prompt, QA_SPECIAL_TOKENS["Answer"]), answer
+        return f'{prompt}{QA_SPECIAL_TOKENS["Answer"]}', answer

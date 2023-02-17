@@ -120,32 +120,32 @@ def get_datasets(dataset_list: List[AnyStr], tokenizer):
 
     train_datasets, evals = [], {}
     for dataset_name in dataset_list:
-        if "webgpt" == dataset_name:
-            web_dataset = WebGPT()
-            train, eval = train_val_dataset(web_dataset, 0.2)
+        if dataset_name == "anthropic_rlhf":
+            train = AnthropicRLHF("train", tokenizer.sep_token)
+            eval = AnthropicRLHF("test", tokenizer.sep_token)
             train_datasets.append(train)
-            evals["webgpt"] = eval
-        elif "hfsummary" == dataset_name:
+            evals["anthropic_rlhf"] = eval
+        elif dataset_name == "gptsynthetic":
+            dataset = GPTJSynthetic()
+            train, eval = train_val_dataset(dataset, 0.1)
+            train_datasets.append(train)
+            evals["gptsynthetic"] = eval
+        elif dataset_name == "hfsummary":
             sum_train = HFSummary(split="train")
             train_datasets.append(sum_train)
             sum_eval = HFSummary(split="valid1")
             assert len(sum_eval) > 0
             evals["hfsummary"] = sum_eval
-        elif "gptsynthetic" == dataset_name:
-            dataset = GPTJSynthetic()
-            train, eval = train_val_dataset(dataset, 0.1)
-            train_datasets.append(train)
-            evals["gptsynthetic"] = eval
-        elif "anthropic_rlhf" == dataset_name:
-            train = AnthropicRLHF("train", tokenizer.sep_token)
-            eval = AnthropicRLHF("test", tokenizer.sep_token)
-            train_datasets.append(train)
-            evals["anthropic_rlhf"] = eval
-        elif "oa_private" == dataset_name:
+        elif dataset_name == "oa_private":
             train = OAPrivate(split="train", sep_token=tokenizer.sep_token)
             eval = OAPrivate(split="val", sep_token=tokenizer.sep_token)
             train_datasets.append(train)
             evals["oa_private"] = eval
 
+        elif dataset_name == "webgpt":
+            web_dataset = WebGPT()
+            train, eval = train_val_dataset(web_dataset, 0.2)
+            train_datasets.append(train)
+            evals["webgpt"] = eval
     train = ConcatDataset(train_datasets)
     return train, evals

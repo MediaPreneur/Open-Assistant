@@ -37,13 +37,12 @@ def task_selection(
     prob_unfinished_prompt = optimize.linprog(
         np.array([1, 1]), A_eq=np.array([[1, 1], [1, -answers_per_prompt]]), b_eq=np.array([1, 0]), bounds=(0, None)
     ).x[0]
-    if np.random.rand() < prob_prompt_task:
-        if np.random.rand() < prob_unfinished_prompt:
-            return Task.ANSWER
-        else:
-            return Task.PROMPT
-    else:
+    if np.random.rand() >= prob_prompt_task:
         return Task.VOTE
+    if np.random.rand() < prob_unfinished_prompt:
+        return Task.ANSWER
+    else:
+        return Task.PROMPT
 
 
 def next_answer_task(possible_prompts, answers_per_prompt):
@@ -64,8 +63,7 @@ def next_answer_task(possible_prompts, answers_per_prompt):
     nums = list(set(possible_prompts.values()))
     p = np.array([max(x / answers_per_prompt, 1 / answers_per_prompt) for x in nums])
     idx = np.random.choice(nums, p=p / p.sum())
-    sample = np.random.choice([k for k, v in possible_prompts.items() if v == idx])
-    return sample
+    return np.random.choice([k for k, v in possible_prompts.items() if v == idx])
 
 
 if __name__ == "__main__":

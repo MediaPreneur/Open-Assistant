@@ -44,13 +44,13 @@ def main(
         print("Ranking")
         print(messages)
         print(len(messages))
-        ranks = [i for i in range(len(messages))]
+        ranks = list(range(len(messages)))
         shuffled = random.shuffle(ranks)
         print(ranks)
         print(shuffled)
         return ranks
 
-    for i in range(int(random_users)):
+    for i in range(random_users):
         name = fake.name()
         USER = {"id": name, "display_name": name, "auth_method": "local"}
 

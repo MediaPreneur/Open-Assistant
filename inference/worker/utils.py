@@ -20,9 +20,7 @@ class TokenBuffer:
         self.tokens.append(token)
         self.token_lens.append(len(token))
         self.total_len += len(token)
-        while True:
-            if not self.tokens:
-                break
+        while self.tokens:
             head_len = self.token_lens[0]
             if self.total_len - head_len >= self.longest_stop_len:
                 token = self.tokens.popleft()
@@ -39,9 +37,7 @@ class TokenBuffer:
                 end_sequence = self.tokens.pop().text + end_sequence
                 if end_sequence in self.stop_sequences:
                     break
-            yield from self.tokens
-        else:
-            yield from self.tokens
+        yield from self.tokens
 
 
 def wait_for_inference_server(inference_server_url: str, timeout: int = 600):

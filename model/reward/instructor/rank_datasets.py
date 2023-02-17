@@ -42,9 +42,9 @@ class RankGenCollator:
         worse_answers = []
         for question, pairs in batch:
             for (pos, neg) in pairs:
-                prefixes.append("pre " + question)
-                better_answers.append("suffi " + pos)
-                worse_answers.append("suffi " + neg)
+                prefixes.append(f"pre {question}")
+                better_answers.append(f"suffi {pos}")
+                worse_answers.append(f"suffi {neg}")
 
         tokenized_prefixes = self.tokenizer(
             prefixes, return_tensors="pt", padding=self.padding, max_length=self.max_length, truncation=True
@@ -79,8 +79,22 @@ class DataCollatorForPairRank:
         batch_size = 0
         for question, pairs in features:
             for (pos, neg) in pairs:
-                flatten_features.append(self.tokenizer(question, pos, truncation=True, max_length=self.max_length))
-                flatten_features.append(self.tokenizer(question, neg, truncation=True, max_length=self.max_length))
+                flatten_features.extend(
+                    (
+                        self.tokenizer(
+                            question,
+                            pos,
+                            truncation=True,
+                            max_length=self.max_length,
+                        ),
+                        self.tokenizer(
+                            question,
+                            neg,
+                            truncation=True,
+                            max_length=self.max_length,
+                        ),
+                    )
+                )
                 batch_size += 1
 
         batch = self.tokenizer.pad(
@@ -148,7 +162,7 @@ class HFSummary(Dataset):
         # to add additional generated prompt later
         self.index2summary = {}
         self.max_comparison_per_sample = max_comparison_per_sample
-        major_split = split if "train" == split else "validation"
+        major_split = split if split == "train" else "validation"
         dataset = load_dataset("openai/summarize_from_feedback", "comparisons")[major_split]
         for data in dataset:
             if (
@@ -157,10 +171,10 @@ class HFSummary(Dataset):
                 and data["extra"]["confidence"] is not None
                 and conf_threshold > data["extra"]["confidence"]
             ):
-                print("skipping {}".format(data["info"]["id"]))
+                print(f'skipping {data["info"]["id"]}')
                 continue
 
-            if split != "train" and split != data["split"]:
+            if split not in ["train", data["split"]]:
                 continue
 
             if "article" in data["info"] and data["info"]["article"] is not None:
@@ -275,7 +289,7 @@ class AnthropicRLHF(Dataset):
         self.pairs = []
         # using prompt as our index will allows us
         # to add additional generated prompt later
-        major_split = split if "train" == split else "test"
+        major_split = split if split == "train" else "test"
         dataset = load_dataset("Anthropic/hh-rlhf")[major_split]
         for data in dataset:
             processed = self.preprocess_dialogue(data["chosen"])
@@ -328,9 +342,7 @@ class OAPrivate(Dataset):
                 data = json.loads(line)
                 prefix = sep_token.join([sep_token.join(p) for p in data["history"][-2:]])
                 prefix += sep_token + data["prompt"]
-                pair = []
-                for neg_text in data["neg_replies"]:
-                    pair.append((data["pos"], neg_text))
+                pair = [(data["pos"], neg_text) for neg_text in data["neg_replies"]]
                 self.pairs.append((prefix, pair))
 
     def __len__(self):

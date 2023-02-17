@@ -39,10 +39,7 @@ from sqlmodel import Session, delete, func, text
 
 
 def _create_user_score(r, highlighted_user_id: UUID | None) -> UserScore:
-    if r["UserStats"]:
-        d = r["UserStats"].dict()
-    else:
-        d = {"modified_date": utcnow()}
+    d = r["UserStats"].dict() if r["UserStats"] else {"modified_date": utcnow()}
     for k in [
         "user_id",
         "username",
@@ -59,10 +56,7 @@ def _create_user_score(r, highlighted_user_id: UUID | None) -> UserScore:
 
 
 def _create_troll_score(r, highlighted_user_id: UUID | None) -> TrollScore:
-    if r["TrollStats"]:
-        d = r["TrollStats"].dict()
-    else:
-        d = {"modified_date": utcnow()}
+    d = r["TrollStats"].dict() if r["TrollStats"] else {"modified_date": utcnow()}
     for k in [
         "user_id",
         "username",
@@ -108,7 +102,7 @@ class UserStatsRepository:
         )
 
         leaderboard = [_create_user_score(r, highlighted_user_id) for r in self.session.exec(qry)]
-        if len(leaderboard) > 0:
+        if leaderboard:
             last_update = max(x.modified_date for x in leaderboard)
         else:
             last_update = utcnow()
@@ -150,7 +144,7 @@ class UserStatsRepository:
         )
 
         leaderboard = [_create_user_score(r, highlighted_user_id=user.id) for r in self.session.exec(qry)]
-        if len(leaderboard) > 0:
+        if leaderboard:
             last_update = max(x.modified_date for x in leaderboard)
         else:
             last_update = utcnow()
@@ -207,7 +201,7 @@ class UserStatsRepository:
         )
 
         trollboard = [_create_troll_score(r, highlighted_user_id) for r in self.session.exec(qry)]
-        if len(trollboard) > 0:
+        if trollboard:
             last_update = max(x.modified_date for x in trollboard)
         else:
             last_update = utcnow()
@@ -279,7 +273,7 @@ class UserStatsRepository:
 
         time_frame_key = time_frame.value
 
-        stats_by_user: dict[UUID, UserStats] = dict()
+        stats_by_user: dict[UUID, UserStats] = {}
         now = utcnow()
 
         def get_stats(id: UUID) -> UserStats:
@@ -454,7 +448,7 @@ class UserStatsRepository:
 
         time_frame_key = time_frame.value
 
-        stats_by_user: dict[UUID, TrollStats] = dict()
+        stats_by_user: dict[UUID, TrollStats] = {}
         now = utcnow()
 
         def get_stats(id: UUID) -> TrollStats:

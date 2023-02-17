@@ -13,10 +13,10 @@ def load_and_split(foldername, num_words):
     ls = os.listdir(foldername)
     X = []
     Y = []
-    langmap = dict()
+    langmap = {}
     for idx, x in enumerate(ls):
         print("loading language", x)
-        with open(foldername + "/" + x, "r") as reader:
+        with open(f"{foldername}/{x}", "r") as reader:
             tmp = reader.read().split(" ")
             tmp = [" ".join(tmp[i : i + num_words]) for i in range(0, 100_000, num_words)]
             X.extend(tmp)
@@ -91,7 +91,10 @@ def save_model(model, idx_to_name, num_words, modelname):
 def inference_voter(model, text):
     tmp = text.split()
     # print(len(tmp), tmp)
-    tmp = [" ".join(tmp[i : i + model["num_words"]]) for i in range(0, len(tmp) - model["num_words"])]
+    tmp = [
+        " ".join(tmp[i : i + model["num_words"]])
+        for i in range(len(tmp) - model["num_words"])
+    ]
     predictions = model["model"].predict(tmp)
     # print("integer predictions", predictions)
     # print("name predictions", *[model["idx_to_name"][n] for n in predictions])

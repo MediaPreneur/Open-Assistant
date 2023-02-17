@@ -95,13 +95,7 @@ if pickle_fail:
         "But man, I don't know how I would feel about just bacteria everywhere. Well, it would be depressing if it was true. I suppose depressing, I don't think, I don't. I don't know what's more depressing, bacteria everywhere or nothing everywhere. Yes, either of them are chilling. Yeah. But whether it's chilling or not, I don't think should force us to change our view about whether it's real or not. Yes. And what I'm saying may or may not be true. So how would you feel if we discovered life on Mars? Absolutely. It sounds like you would be less excited than some others because you're like, well. What I would be most interested in is how similar to life on Earth it would be. It would actually turn into quite a subtle problem because the likelihood of life having gone to and from between Mars and the Earth is quite, I wouldn't say high, but it's not low, it's quite feasible. And so if we found life on Mars and it had very similar genetic code, but it was slightly different, most people would interpret that immediately as evidence that they've been transit one way or the other and that it was a common origin of life on Mars or on the Earth and it went one way or the other way.",
     ]
 
-# Make sure no paragraphs are too long for T5. It handles up to 512 tokens context length.
-fixed_paragraphs = []
-for k in paragraphs:
-    if len(k) > 1100:
-        pass
-    else:
-        fixed_paragraphs.append(k)
+fixed_paragraphs = [k for k in paragraphs if len(k) <= 1100]
 print("Original number of paragraphs:", len(paragraphs))
 print("Length filtered number of paragraphs:", len(fixed_paragraphs))
 paragraphs = fixed_paragraphs
@@ -131,16 +125,14 @@ def ask_flan_T5(input_text):
     probs = torch.stack(outputs.scores, dim=1).softmax(-1)
     for i in outputs.sequences:
         logprobs = 0
-        counter = 0
         output_scores = ""
-        for k in i[1:]:
+        for counter, k in enumerate(i[1:]):
             word_piece = tokenizer.decode(k.item())
             word_prob = (round(probs[0][counter][k.item()].item(), 2)) + 0.001
             word_logprob = round(math.log(word_prob), 2)
             logprobs = logprobs + math.log(word_prob)
-            next_piece = word_piece + "(" + str(word_prob) + " " + str(word_logprob) + ")"
-            output_scores = output_scores + " " + next_piece
-            counter += 1
+            next_piece = f"{word_piece}({str(word_prob)} {str(word_logprob)})"
+            output_scores = f"{output_scores} {next_piece}"
         out_tuple = (out_text, round(logprobs, 2))
     return out_tuple
 
@@ -161,16 +153,14 @@ def ask_flan_T5D(input_text):
     probs = torch.stack(outputs.scores, dim=1).softmax(-1)
     for i in outputs.sequences:
         logprobs = 0
-        counter = 0
         output_scores = ""
-        for k in i[1:]:
+        for counter, k in enumerate(i[1:]):
             word_piece = tokenizer.decode(k.item())
             word_prob = (round(probs[0][counter][k.item()].item(), 2)) + 0.001
             word_logprob = round(math.log(word_prob), 2)
             logprobs = logprobs + math.log(word_prob)
-            next_piece = word_piece + "(" + str(word_prob) + " " + str(word_logprob) + ")"
-            output_scores = output_scores + " " + next_piece
-            counter += 1
+            next_piece = f"{word_piece}({str(word_prob)} {str(word_logprob)})"
+            output_scores = f"{output_scores} {next_piece}"
         out_tuple = (out_text, round(logprobs, 2))
     return out_tuple
 
@@ -179,7 +169,7 @@ def ask_flan_T5D(input_text):
 def generate_topic(paragraph):
     results = set()
     input_text = "Task: Create a topic classifier for the provided paragraph.\nParagraph:\n" + paragraph + "\nTopic: "
-    for k in range(0, 20):
+    for _ in range(20):
         result = ask_flan_T5(input_text)
         if result[1] > -4:
             results.add(result)
@@ -187,7 +177,7 @@ def generate_topic(paragraph):
             results.add(("I was wondering", -3.3))
             results.add(("I have a question", -3.3))
     sorted_results = Sort_Tuple(list(results))
-    return sorted_results[0:5]
+    return sorted_results[:5]
 
 
 # Generate a topic classifier for a paragraph of text
@@ -200,17 +190,16 @@ def generate_topic_prefix(topic_set):
             + topic
             + "\nPrepositional Phrase: "
         )
-        for k in range(0, 5):
+        for _ in range(5):
             results.add(ask_flan_T5(input_text))
         sorted_results = Sort_Tuple(list(results))
-        return sorted_results[0:5]
+        return sorted_results[:5]
 
 
 # Generate who/what/where/when/why questions from a paragraph. Number of questions variable is an integer which indicates how many of each question type to try to generate.
 def generate_questions(paragraph, number_of_questions):
     if len(tokenizer.encode(paragraph)) > 480:
         print("Warning, the context length is too long and could give bad results.")
-    question_set = set()
     question_types = [
         "What",
         "Where",
@@ -218,15 +207,15 @@ def generate_questions(paragraph, number_of_questions):
         "How",
         "Who",
     ]
+    question_set = set()
     for qtype in question_types:
         question = (
-            "Please generate a question that starts with '"
-            + qtype
+            f"Please generate a question that starts with '{qtype}"
             + "' based on the following paragraph.\nText:\n"
             + paragraph
             + "\nQuestion:\n"
         )
-        for k in range(0, number_of_questions):
+        for _ in range(number_of_questions):
             new_question = ask_flan_T5(question)
             if qtype in new_question[0]:
                 question_set.add((qtype, new_question))
@@ -245,9 +234,7 @@ def generate_answers(paragraph, question_set):
             + "\nAnswer:\n"
         )
         answer = ask_flan_T5D(input_text)
-        if "NA" in answer[0]:
-            pass
-        else:
+        if "NA" not in answer[0]:
             possible_answers.add((question[0], question[1], answer))
     return possible_answers
 
@@ -293,9 +280,7 @@ def generate_declarative(qaq_set):
     for qa_item in qaq_set:
         question = qa_item[0]
         answer = qa_item[1][0]
-        if "NA" in answer:
-            pass
-        else:
+        if "NA" not in answer:
             input_text = (
                 "Generate a declarative statement based on the given question and answer pair.\nQ: What is sitting on the couch?\nA: poodle\nA poodle is sitting on the couch.\nQ: "
                 + question
@@ -312,12 +297,9 @@ def generate_declarative(qaq_set):
 def generate_closed_answer(qaqd_set):
     qaqd_results = set()
     for qa_item in qaqd_set:
-        question = qa_item[0]
         answer = qa_item[2][0]
-        if "NA" in answer:
-            # print(answer)
-            pass
-        else:
+        if "NA" not in answer:
+            question = qa_item[0]
             input_text = (
                 "Task: Answer the question in a detailed fashion. If the question cannot be answered without more information, please answer NA.\nExample 1:\nQuestion: Why does Shala like cookies?\nAnswer: It is not possible to know why Shala likes cookies without more information, but many people that like cookies enjoy their taste or some of their ingredients (e.g. chocolate chips or peanut butter).\nExample 2:\nQuestion: Why would someone vote in an election?\nAnswer: There are many reasons someone might vote in an election, for instance to have their voice heard or to help a candidate they like win the race.\nExample 3\nQuestion: What decoration goes on top of a Christmas tree?\nAnswer: Usually a star is placed at the top of a Christmas tree.\nExample 4:\nQuestion: "
                 + question
@@ -332,30 +314,29 @@ def generate_closed_answer(qaqd_set):
 start_time = time.perf_counter()
 questions_dict = {}
 uniq_id = 100000
-for paragraph in paragraphs[0:1500]:
+for paragraph in paragraphs[:1500]:
     topic_list = generate_topic(paragraph)
     topic_prefix = generate_topic_prefix(topic_list)
     question_set = generate_questions(paragraph, 2)
     qa_set = generate_answers(paragraph, question_set)
     qaq_set = generate_question2(paragraph, qa_set)
-    q2_set = set()
-    for q in qaq_set:
-        q2_set.add(q[3][0])
+    q2_set = {q[3][0] for q in qaq_set}
     q2a2_set = generate_answers2(paragraph, q2_set)
     a2d_set = generate_declarative(q2a2_set)
     a3cb_set = generate_closed_answer(a2d_set)
-    questions_dict[uniq_id] = {}
-    questions_dict[uniq_id]["topics"] = topic_list
-    questions_dict[uniq_id]["topic prepositions"] = topic_prefix
-    questions_dict[uniq_id]["paragraph"] = paragraph
-    entry_count = 0
-    entry_dict = {}
-    for entry in a3cb_set:
-        entry_dict[entry_count] = {}
-        entry_dict[entry_count]["question"] = entry[0]
-        entry_dict[entry_count]["answer_T5_ob"] = entry[2][0]
-        entry_dict[entry_count]["answer_T5_cb"] = entry[3][0]
-        entry_count += 1
+    questions_dict[uniq_id] = {
+        "topics": topic_list,
+        "topic prepositions": topic_prefix,
+        "paragraph": paragraph,
+    }
+    entry_dict = {
+        entry_count: {
+            "question": entry[0],
+            "answer_T5_ob": entry[2][0],
+            "answer_T5_cb": entry[3][0],
+        }
+        for entry_count, entry in enumerate(a3cb_set)
+    }
     questions_dict[uniq_id]["QA_set"] = entry_dict
     uniq_id += 1
     print(uniq_id, "topics:", topic_prefix)
@@ -365,11 +346,6 @@ generation_time = stop_time - start_time
 print(questions_dict[uniq_id - 1])
 print(generation_time)
 
-# create a binary pickle file to save your dictionary
-f = open("questions_dict.pkl", "wb")
-
-# write the python object (dict) to pickle file
-pickle.dump(questions_dict, f)
-
-# close file
-f.close()
+with open("questions_dict.pkl", "wb") as f:
+    # write the python object (dict) to pickle file
+    pickle.dump(questions_dict, f)

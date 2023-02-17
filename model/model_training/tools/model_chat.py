@@ -29,21 +29,23 @@ def talk(human_input, history, sep_token, prefix=""):
     histories = []
     if method == "v2":
         prefix = "<prefix>You are a helpful assistant called Joi trained by OpenAssistant on large corpus of data, you will now help user to answer the question as concise as possible</prefix>"
-        for (question, answer) in history:
-            histories.append(
-                "{}{}{}{}".format(QA_SPECIAL_TOKENS["Question"], question, QA_SPECIAL_TOKENS["Answer"], answer)
-            )
-        if len(histories) > 0:
+        histories.extend(
+            f'{QA_SPECIAL_TOKENS["Question"]}{question}{QA_SPECIAL_TOKENS["Answer"]}{answer}'
+            for question, answer in history
+        )
+        if histories:
             prefix += sep_token.join(histories)
             # add sep at the end
             prefix += sep_token
-        prefix += "{}{}{}".format(QA_SPECIAL_TOKENS["Question"], human_input, QA_SPECIAL_TOKENS["Answer"])
+        prefix += f'{QA_SPECIAL_TOKENS["Question"]}{human_input}{QA_SPECIAL_TOKENS["Answer"]}'
     else:
-        for (question, answer) in history:
-            histories.append("User: " + question + "\n\n{}: ".format(bot_name) + answer + "\n")
-        if len(histories) > 0:
+        histories.extend(
+            f"User: {question}" + f"\n\n{bot_name}: " + answer + "\n"
+            for question, answer in history
+        )
+        if histories:
             prefix += "\n".join(histories)
-        prefix += "\nUser: " + human_input + "\n\n{}: ".format(bot_name)
+        prefix += "\nUser: " + human_input + f"\n\n{bot_name}: "
 
     return prefix
 
@@ -53,8 +55,13 @@ def process_output(output):
         answer = output.split(QA_SPECIAL_TOKENS["Answer"])[-1]
         answer = answer.split("</s>")[0].replace("<|endoftext|>", "").lstrip().split(QA_SPECIAL_TOKENS["Answer"])[0]
     else:
-        answer = output.split("\n\n{}:".format(bot_name))[-1]
-        answer = answer.split("</s>")[0].replace("<|endoftext|>", "").lstrip().split("\n\n{}:".format(bot_name))[0]
+        answer = output.split(f"\n\n{bot_name}:")[-1]
+        answer = (
+            answer.split("</s>")[0]
+            .replace("<|endoftext|>", "")
+            .lstrip()
+            .split(f"\n\n{bot_name}:")[0]
+        )
     return answer
 
 
