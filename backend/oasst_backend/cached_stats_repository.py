@@ -80,10 +80,14 @@ class CachedStatsRepository:
         self.db.add(row)
 
     def get_stats(self, name: CachedStatsName) -> CachedStatsResponse:
-        row: CachedStats | None = self.db.query(CachedStats).filter(CachedStats.name == name).one_or_none()
-        if not row:
+        if (
+            row := self.db.query(CachedStats)
+            .filter(CachedStats.name == name)
+            .one_or_none()
+        ):
+            return CachedStatsResponse(name=row.name, last_updated=row.modified_date, stats=row.stats)
+        else:
             raise OasstError(f"Cached stats '{name.value}' not found.", OasstErrorCode.CACHED_STATS_NOT_AVAILABLE)
-        return CachedStatsResponse(name=row.name, last_updated=row.modified_date, stats=row.stats)
 
     def get_stats_all(self) -> AllCachedStatsResponse:
         by_name: dict[CachedStatsName, CachedStatsResponse] = {}

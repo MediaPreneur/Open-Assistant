@@ -38,16 +38,13 @@ def cycle_detect(pairs):
     if len(pairs) <= 1:
         return False
     losers = [c_lose for c_lose in np.unique(pairs[:, 1]) if c_lose not in pairs[:, 0]]
-    if len(losers) == 0:
+    if not losers:
         # if we recursively removed pairs, and at some point we did not have
         # a condorcet loser, that means everything is both a winner and loser,
         # yielding at least one (winner,loser), (loser,winner) pair
         return True
 
-    new = []
-    for p in pairs:
-        if p[1] not in losers:
-            new.append(p)
+    new = [p for p in pairs if p[1] not in losers]
     return cycle_detect(np.array(new))
 
 
@@ -100,12 +97,11 @@ def ranked_pairs(ranks: List[List[int]]):
     # order by strength of victory (using tideman's original method, don't think it would make a difference for us)
     sorted_majorities = []
     for i in range(len(ranks[0])):
-        for j in range(len(ranks[0])):
-            # you can never prefer yourself over yourself
-            # we also have to pick one of the two choices,
-            # if the preference is exactly zero...
-            if tallies[i, j] >= 0 and i != j:
-                sorted_majorities.append((i, j, tallies[i, j]))
+        sorted_majorities.extend(
+            (i, j, tallies[i, j])
+            for j in range(len(ranks[0]))
+            if tallies[i, j] >= 0 and i != j
+        )
     # we don't explicitly deal with tied majorities here
     sorted_majorities = np.array(sorted(sorted_majorities, key=lambda x: x[2], reverse=True))
     # now do lock ins
@@ -125,8 +121,7 @@ def ranked_pairs(ranks: List[List[int]]):
     # Since there could be multiple overall losers, we just return them in any order
     # as we are unable to find a closer ranking
     numerical_ranks = np.array(get_ranking(np.array(lock_ins))).astype(int)
-    conversion = [names[n] for n in numerical_ranks]
-    return conversion
+    return [names[n] for n in numerical_ranks]
 
 
 if __name__ == "__main__":

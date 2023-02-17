@@ -172,9 +172,9 @@ class _RankingTaskHandler(_TaskHandler[_Ranking_contra]):
                 await cursor.execute("SELECT log_channel_id FROM guilds WHERE guild_id = ?", (self.ctx.guild_id,))
             ).fetchone()
             log_channel = row[0] if row else None
-        log_messages: list[hikari.Message] = []
-
         if log_channel is not None:
+            log_messages: list[hikari.Message] = []
+
             for message in self.task_messages[:-1]:
                 msg = await self.ctx.bot.rest.create_message(log_channel, message)
                 log_messages.append(msg)
@@ -190,7 +190,8 @@ class RankAssistantRepliesHandler(_RankingTaskHandler[protocol_schema.RankAssist
 
     def check_user_input(self, content: str) -> bool:
         return len(content.split(",")) == len(self.task.reply_messages) and all(
-            [r.isdigit() and int(r) in range(1, len(self.task.reply_messages) + 1) for r in content.split(",")]
+            r.isdigit() and int(r) in range(1, len(self.task.reply_messages) + 1)
+            for r in content.split(",")
         )
 
     async def confirm_user_input(self, content: str) -> bool:
@@ -214,7 +215,8 @@ class RankInitialPromptHandler(_RankingTaskHandler[protocol_schema.RankInitialPr
 
     def check_user_input(self, content: str) -> bool:
         return len(content.split(",")) == len(self.task.prompt_messages) and all(
-            [r.isdigit() and int(r) in range(1, len(self.task.prompt_messages) + 1) for r in content.split(",")]
+            r.isdigit() and int(r) in range(1, len(self.task.prompt_messages) + 1)
+            for r in content.split(",")
         )
 
     async def confirm_user_input(self, content: str) -> bool:
@@ -235,7 +237,8 @@ class RankPrompterReplyHandler(_RankingTaskHandler[protocol_schema.RankPrompterR
 
     def check_user_input(self, content: str) -> bool:
         return len(content.split(",")) == len(self.task.reply_messages) and all(
-            [r.isdigit() and int(r) in range(1, len(self.task.reply_messages) + 1) for r in content.split(",")]
+            r.isdigit() and int(r) in range(1, len(self.task.reply_messages) + 1)
+            for r in content.split(",")
         )
 
     async def confirm_user_input(self, content: str) -> bool:
@@ -256,7 +259,8 @@ class RankConversationReplyHandler(_RankingTaskHandler[protocol_schema.RankConve
 
     def check_user_input(self, content: str) -> bool:
         return len(content.split(",")) == len(self.task.reply_messages) and all(
-            [r.isdigit() and int(r) in range(1, len(self.task.reply_messages) + 1) for r in content.split(",")]
+            r.isdigit() and int(r) in range(1, len(self.task.reply_messages) + 1)
+            for r in content.split(",")
         )
 
     async def confirm_user_input(self, content: str) -> bool:
@@ -276,7 +280,7 @@ class InitialPromptHandler(_TaskHandler[protocol_schema.InitialPromptTask]):
         return initial_prompt_messages(task)
 
     def check_user_input(self, content: str) -> bool:
-        return len(content) > 0
+        return content != ""
 
     async def confirm_user_input(self, content: str) -> bool:
         confirm_input_view = YesNoView()
@@ -293,7 +297,7 @@ class PrompterReplyHandler(_TaskHandler[protocol_schema.PrompterReplyTask]):
         return prompter_reply_messages(task)
 
     def check_user_input(self, content: str) -> bool:
-        return len(content) > 0
+        return content != ""
 
     async def confirm_user_input(self, content: str) -> bool:
         confirm_input_view = YesNoView()
@@ -310,7 +314,7 @@ class AssistantReplyHandler(_TaskHandler[protocol_schema.AssistantReplyTask]):
         return assistant_reply_messages(task)
 
     def check_user_input(self, content: str) -> bool:
-        return len(content) > 0
+        return content != ""
 
     async def confirm_user_input(self, content: str) -> bool:
         confirm_input_view = YesNoView()
@@ -328,9 +332,9 @@ class _LabelConversationReplyHandler(_TaskHandler[_Label_contra]):
     def check_user_input(self, content: str) -> bool:
         user_labels = content.split(",")
         return (
-            all([l in self.task.valid_labels for l in user_labels])
+            all(l in self.task.valid_labels for l in user_labels)
             and self.task.mandatory_labels is not None
-            and all([m in user_labels for m in self.task.mandatory_labels])
+            and all(m in user_labels for m in self.task.mandatory_labels)
         )
 
     async def confirm_user_input(self, content: str) -> bool:

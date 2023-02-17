@@ -62,8 +62,7 @@ def manual_create_session():
 
 
 def create_chat_repository(session: sqlmodel.Session = Depends(create_session)):
-    repository = ChatRepository(session)
-    return repository
+    return ChatRepository(session)
 
 
 @contextlib.contextmanager
@@ -199,8 +198,7 @@ async def create_chat(
 @app.get("/chat/{id}")
 async def get_chat(id: str, chat_repository: ChatRepository = Depends(create_chat_repository)) -> interface.ChatEntry:
     """Allows a client to get the current state of a chat."""
-    chat = chat_repository.get_chat_entry_by_id(id)
-    return chat
+    return chat_repository.get_chat_entry_by_id(id)
 
 
 @app.post("/chat/{chat_id}/message")

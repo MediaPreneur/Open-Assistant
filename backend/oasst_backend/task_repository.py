@@ -210,16 +210,21 @@ class TaskRepository:
 
     def fetch_task_by_frontend_message_id(self, message_id: str) -> Task:
         validate_frontend_message_id(message_id)
-        task = (
+        return (
             self.db.query(Task)
-            .filter(Task.api_client_id == self.api_client.id, Task.frontend_message_id == message_id)
+            .filter(
+                Task.api_client_id == self.api_client.id,
+                Task.frontend_message_id == message_id,
+            )
             .one_or_none()
         )
-        return task
 
     def fetch_task_by_id(self, task_id: UUID) -> Task:
-        task = self.db.query(Task).filter(Task.api_client_id == self.api_client.id, Task.id == task_id).one_or_none()
-        return task
+        return (
+            self.db.query(Task)
+            .filter(Task.api_client_id == self.api_client.id, Task.id == task_id)
+            .one_or_none()
+        )
 
     def fetch_recent_reply_tasks(
         self,

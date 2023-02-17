@@ -94,9 +94,7 @@ def get_users_cursor(
         if not x:
             return None, None
         m = utils.split_uuid_pattern.match(x)
-        if m:
-            return m[2], UUID(m[1])
-        return x, None
+        return (m[2], UUID(m[1])) if m else (x, None)
 
     items: list[protocol.FrontEndUser]
     qry_max_count = max_count + 1 if before is None or after is None else max_count
@@ -104,11 +102,11 @@ def get_users_cursor(
 
     def get_next_prev(num_rows: int, lt: str | None, gt: str | None, key_fn: Callable[[protocol.FrontEndUser], str]):
         p, n = None, None
-        if len(items) > 0:
+        if items:
             if (num_rows > max_count and lt) or gt:
-                p = str(items[0].user_id) + "$" + key_fn(items[0])
+                p = f"{str(items[0].user_id)}${key_fn(items[0])}"
             if num_rows > max_count or lt:
-                n = str(items[-1].user_id) + "$" + key_fn(items[-1])
+                n = f"{str(items[-1].user_id)}${key_fn(items[-1])}"
         else:
             if gt:
                 p = gt
@@ -119,7 +117,7 @@ def get_users_cursor(
     def remove_extra_item(items: list[protocol.FrontEndUser], lt: str | None, gt: str | None):
         num_rows = len(items)
         if qry_max_count > max_count and num_rows == qry_max_count:
-            assert not (lt is not None and gt is not None)
+            assert lt is None or gt is None
             items = items[:-1]
         if desc:
             items.reverse()

@@ -93,11 +93,7 @@ class JournalWriter:
         commit: bool = True,
     ) -> Journal:
         if event_type is None:
-            if payload is None:
-                event_type = "null"
-            else:
-                event_type = type(payload).__name__
-
+            event_type = "null" if payload is None else type(payload).__name__
         if payload.user_id is None:
             payload.user_id = self.user_id
         if payload.message_id is None:

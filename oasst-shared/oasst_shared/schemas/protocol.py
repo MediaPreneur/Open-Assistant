@@ -92,9 +92,7 @@ class Conversation(BaseModel):
         if len(self) == 0:
             return True
         last_message = self.messages[-1]
-        if last_message.is_assistant:
-            return True
-        return False
+        return bool(last_message.is_assistant)
 
 
 class Message(ConversationMessage):

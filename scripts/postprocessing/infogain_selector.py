@@ -65,15 +65,13 @@ def analytic_solution(a_post, a_prior):
     """
     post_sum = np.sum(a_post)
     prior_sum = np.sum(a_prior)
-    info = (
+    return (
         gammaln(post_sum)
         - gammaln(prior_sum)
         - np.sum(gammaln(a_post))
         + np.sum(gammaln(a_prior))
         - np.sum((a_post - a_prior) * (psi(a_post) - psi(post_sum)))
     )
-
-    return info
 
 
 def uniform_expected_infogain(a_prior):

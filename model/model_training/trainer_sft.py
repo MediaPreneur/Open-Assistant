@@ -36,8 +36,7 @@ def compute_metrics(eval_pred, preprocess_fns, metrics):
 
 
 def preprocess_logits_for_metrics(logits, labels):
-    pred_ids = torch.argmax(logits, dim=-1)
-    return pred_ids
+    return torch.argmax(logits, dim=-1)
 
 
 class SFTTrainer(Trainer):
@@ -178,7 +177,7 @@ def argument_parsing(notebook=False, notebook_args=None):
     for name in args.configs:
         if "," in name:
             for n in name.split(","):
-                conf.update(configs[n])
+                conf |= configs[n]
         else:
             conf.update(configs[name])
 

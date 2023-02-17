@@ -27,7 +27,7 @@ def argument_parsing(notebook=False, notebook_args=None):
     for name in args.configs:
         if "," in name:
             for n in name.split(","):
-                conf.update(configs[n])
+                conf |= configs[n]
         else:
             conf.update(configs[name])
 

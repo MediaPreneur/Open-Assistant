@@ -56,10 +56,7 @@ def prepare_conversation(messages: list[Message]) -> protocol.Conversation:
 
 
 def prepare_tree(tree: list[Message], tree_id: UUID) -> protocol.MessageTree:
-    tree_messages = []
-    for message in tree:
-        tree_messages.append(prepare_message(message))
-
+    tree_messages = [prepare_message(message) for message in tree]
     return protocol.MessageTree(id=tree_id, messages=tree_messages)
 
 

@@ -79,20 +79,22 @@ def get_dataset_fractions(conf, dataset_sizes, verbose=False):
     fractions = []
     for i, data_config in enumerate(conf):
         dataset_name, _ = get_dataset_name_and_kwargs_from_data_config(data_config)
-        if isinstance(data_config, dict):
-            if "fraction" in data_config[dataset_name]:
-                if data_config[dataset_name]["fraction"] <= 0:
-                    raise ValueError("Please specify fraction as a value between 0 < fraction <= 1")
-                fractions.append(min(1, data_config[dataset_name]["fraction"]))
-            elif "size" in data_config[dataset_name]:
-                if data_config[dataset_name]["size"] > dataset_sizes[i]:
-                    raise ValueError(f"Please specify a size smaller than number of examples: {dataset_sizes[i]:,.0f}")
-                fractions.append(data_config[dataset_name]["size"] / dataset_sizes[i])
-            else:
-                fractions.append(1)
+        if (
+            isinstance(data_config, dict)
+            and "fraction" in data_config[dataset_name]
+        ):
+            if data_config[dataset_name]["fraction"] <= 0:
+                raise ValueError("Please specify fraction as a value between 0 < fraction <= 1")
+            fractions.append(min(1, data_config[dataset_name]["fraction"]))
+        elif (
+            isinstance(data_config, dict)
+            and "size" in data_config[dataset_name]
+        ):
+            if data_config[dataset_name]["size"] > dataset_sizes[i]:
+                raise ValueError(f"Please specify a size smaller than number of examples: {dataset_sizes[i]:,.0f}")
+            fractions.append(data_config[dataset_name]["size"] / dataset_sizes[i])
         else:
             fractions.append(1)
-
         if verbose:
             print(f"Dataset: {dataset_name} fraction chosen: {fractions[-1]:.2f}")
     return fractions
@@ -124,7 +126,7 @@ def match_tokenizer_name(model_name: str) -> TokenizerConfig:
     tokenizer_config_matches = [config for name, config in TOKENIZER_CONFIGS.items() if name in model_name]
     if not tokenizer_config_matches:
         raise ValueError(f"Cannot find any tokeniser configuration to match {model_name=}")
-    elif 1 < len(tokenizer_config_matches):
+    elif len(tokenizer_config_matches) > 1:
         raise ValueError(f"Found multiple tokeniser configuration matches for {model_name=}")
     else:
         return tokenizer_config_matches[0]
@@ -225,22 +227,21 @@ def get_model(conf, tokenizer):
         model = freeze_top_n_layers(model, conf.freeze_layer)
 
     model_parameters = filter(lambda p: p.requires_grad, model.parameters())
-    params = sum([p.numel() for p in model_parameters])
-    print("Number of trainable parameters: {}M".format(int(params / 1e6)))
+    params = sum(p.numel() for p in model_parameters)
+    print(f"Number of trainable parameters: {int(params / 1000000.0)}M")
 
     return model
 
 
 def get_dataset_name_and_kwargs_from_data_config(data_config):
-    if isinstance(data_config, dict):
-        name = list(data_config.keys())[0]
-        kwargs = data_config[name]
-        # remove 'fraction' or 'size' from kwargs
-        kwargs.pop("fraction", None)
-        kwargs.pop("size", None)
-        return name, kwargs
-    else:
+    if not isinstance(data_config, dict):
         return data_config, {}
+    name = list(data_config.keys())[0]
+    kwargs = data_config[name]
+    # remove 'fraction' or 'size' from kwargs
+    kwargs.pop("fraction", None)
+    kwargs.pop("size", None)
+    return name, kwargs
 
 
 def get_dataset(conf, mode="sft"):
@@ -275,7 +276,7 @@ def read_yamls(dir):
     for config_file in Path(dir).glob("**/*.yaml"):
         no_conf = False
         with config_file.open("r") as f:
-            conf.update(yaml.safe_load(f))
+            conf |= yaml.safe_load(f)
 
     if no_conf:
         print(f"WARNING: No yaml files found in {dir}")

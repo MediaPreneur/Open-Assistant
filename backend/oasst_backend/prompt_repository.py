@@ -135,11 +135,7 @@ class PromptRepository:
         review_result: bool = None,
     ) -> Message:
         if payload_type is None:
-            if payload is None:
-                payload_type = "null"
-            else:
-                payload_type = type(payload).__name__
-
+            payload_type = "null" if payload is None else type(payload).__name__
         message = Message(
             id=message_id,
             parent_id=parent_id,
@@ -253,9 +249,10 @@ class PromptRepository:
             depth = parent_message.depth + 1
 
         task_payload: db_payload.TaskPayload = task.payload.payload
-        if isinstance(task_payload, db_payload.InitialPromptPayload):
-            role = "prompter"
-        elif isinstance(task_payload, db_payload.PrompterReplyPayload):
+        if isinstance(
+            task_payload,
+            (db_payload.InitialPromptPayload, db_payload.PrompterReplyPayload),
+        ):
             role = "prompter"
         elif isinstance(task_payload, db_payload.AssistantReplyPayload):
             role = "assistant"
@@ -488,9 +485,10 @@ class PromptRepository:
 
             logger.debug(f"text_labels reply: {valid_labels=}, {mandatory_labels=}")
 
-            if valid_labels:
-                if not all([label in valid_labels for label in text_labels.labels.keys()]):
-                    raise OasstError("Invalid text label specified", OasstErrorCode.TEXT_LABELS_INVALID_LABEL)
+            if valid_labels and any(
+                label not in valid_labels for label in text_labels.labels.keys()
+            ):
+                raise OasstError("Invalid text label specified", OasstErrorCode.TEXT_LABELS_INVALID_LABEL)
 
             if isinstance(mandatory_labels, list):
                 mandatory_set = set(mandatory_labels)
@@ -574,8 +572,12 @@ class PromptRepository:
             distinct_message_trees = distinct_message_trees.filter(Message.review_result == review_result)
         distinct_message_trees = distinct_message_trees.subquery()
 
-        random_message_tree_id = self.db.query(distinct_message_trees).order_by(func.random()).limit(1).scalar()
-        if random_message_tree_id:
+        if (
+            random_message_tree_id := self.db.query(distinct_message_trees)
+            .order_by(func.random())
+            .limit(1)
+            .scalar()
+        ):
             return self.fetch_message_tree(random_message_tree_id, review_result=review_result, deleted=deleted)
         return None
 
@@ -611,19 +613,20 @@ class PromptRepository:
             conv_messages = [random.choice(messages_tree)]
         messages_tree = {m.id: m for m in messages_tree}
 
-        while True:
-            if not conv_messages[-1].parent_id:
-                # reached the start of the conversation
-                break
-
+        while conv_messages[-1].parent_id:
             parent_message = messages_tree[conv_messages[-1].parent_id]
             conv_messages.append(parent_message)
 
         return list(reversed(conv_messages))
 
     def fetch_random_initial_prompts(self, size: int = 5):
-        messages = self.db.query(Message).filter(Message.parent_id.is_(None)).order_by(func.random()).limit(size).all()
-        return messages
+        return (
+            self.db.query(Message)
+            .filter(Message.parent_id.is_(None))
+            .order_by(func.random())
+            .limit(size)
+            .all()
+        )
 
     def fetch_message_tree(
         self,
@@ -655,12 +658,7 @@ class PromptRepository:
             )
             .all()
         )
-        if not messages:
-            return False
-        for msg in messages:
-            if msg.text == text:
-                return True
-        return False
+        return any(msg.text == text for msg in messages) if messages else False
 
     def fetch_user_message_trees(
         self, user_id: Message.user_id, reviewed: bool = True, include_deleted: bool = False
@@ -694,11 +692,7 @@ class PromptRepository:
         message_tree = self.fetch_message_tree(replies[0].message_tree_id)
         message_tree = {p.id: p for p in message_tree}
         conversation = [message_tree[replies[0].parent_id]]
-        while True:
-            if not conversation[-1].parent_id:
-                # reached start of the conversation
-                break
-
+        while conversation[-1].parent_id:
             parent_message = message_tree[conversation[-1].parent_id]
             conversation.append(parent_message)
 
@@ -723,8 +717,7 @@ class PromptRepository:
             .outerjoin(Task, Task.id == TextLabels.id)
             .filter(Task.id.is_(None), TextLabels.message_id == message_id, TextLabels.user_id == user_id)
         )
-        text_label = query.one_or_none()
-        return text_label
+        return query.one_or_none()
 
     def fetch_message_text_labels(self, message_id: UUID, user_id: Optional[UUID] = None) -> list[TextLabels]:
         query = self.db.query(TextLabels).filter(TextLabels.message_id == message_id)
@@ -799,8 +792,7 @@ class PromptRepository:
             qry = qry.filter(Message.review_result == review_result)
         if deleted is not None:
             qry = qry.filter(Message.deleted == deleted)
-        children = self._add_user_emojis_all(qry)
-        return children
+        return self._add_user_emojis_all(qry)
 
     def fetch_message_siblings(
         self,
@@ -822,8 +814,7 @@ class PromptRepository:
             qry = qry.filter(Message.review_result == review_result)
         if deleted is not None:
             qry = qry.filter(Message.deleted == deleted)
-        siblings = self._add_user_emojis_all(qry)
-        return siblings
+        return self._add_user_emojis_all(qry)
 
     @staticmethod
     def trace_descendants(root: Message, messages: list[Message]) -> list[Message]:
@@ -888,8 +879,7 @@ class PromptRepository:
         messages: list[Message] = []
         for x in qry:
             m: Message = x.Message
-            user_emojis = x["user_emojis"]
-            if user_emojis:
+            if user_emojis := x["user_emojis"]:
                 m._user_emojis = user_emojis.split(",")
             m._user_is_author = self.user_id and self.user_id == m.user_id
             messages.append(m)
@@ -1034,7 +1024,7 @@ WHERE message.id = cc.id;
         deleted = self.db.query(Message.deleted, func.count()).group_by(Message.deleted)
         nthreads = self.db.query(None, func.count(Message.id)).filter(Message.parent_id.is_(None))
         query = deleted.union_all(nthreads)
-        result = {k: v for k, v in query.all()}
+        result = dict(query.all())
 
         return SystemStats(
             all=result.get(True, 0) + result.get(False, 0),
@@ -1129,12 +1119,11 @@ WHERE message.id = cc.id;
             # insert emoji record & increment count
             message_emoji = MessageEmoji(message_id=message.id, user_id=self.user_id, emoji=emoji)
             self.db.add(message_emoji)
-            emoji_counts = message.emojis
-            if not emoji_counts:
-                message.emojis = {emoji.value: 1}
-            else:
+            if emoji_counts := message.emojis:
                 count = emoji_counts.get(emoji.value) or 0
                 emoji_counts[emoji.value] = count + 1
+            else:
+                message.emojis = {emoji.value: 1}
             if message._user_emojis is None:
                 message._user_emojis = []
             if emoji.value not in message._user_emojis:

@@ -144,36 +144,33 @@ def modify_dict_cols(j_dict):
 
 def process_single_file(f, processed_list):
 
+    if f in processed_list:
+        return
     j_dict_list = []
-    if f not in processed_list:
         # Check for compression type
-        if f.suffix == ".bz2":
-            with bz2.BZ2File(f) as file:
-                for line in file:
-                    # Load JSON
-                    j_dict = json.loads(line)
+    if f.suffix == ".bz2":
+        with bz2.BZ2File(f) as file:
+            for line in file:
+                # Load JSON
+                j_dict = json.loads(line)
                     # Check if user key exists
-                    if "delete" not in j_dict:
-                        if j_dict["truncated"] is False:
+                if "delete" not in j_dict and j_dict["truncated"] is False:
+                    j_dict = modify_dict_cols(j_dict)
 
-                            j_dict = modify_dict_cols(j_dict)
+                    j_dict_list.append(j_dict)
 
-                            j_dict_list.append(j_dict)
-
-        else:
-            with gzip.open(f, "r") as file:
-                for line in file:
-                    # Load JSON
-                    j_dict = json.loads(line)
+    else:
+        with gzip.open(f, "r") as file:
+            for line in file:
+                # Load JSON
+                j_dict = json.loads(line)
                     # Check if user key exists
-                    if "delete" not in j_dict:
-                        if j_dict["truncated"] is False:
+                if "delete" not in j_dict and j_dict["truncated"] is False:
+                    j_dict = modify_dict_cols(j_dict)
 
-                            j_dict = modify_dict_cols(j_dict)
+                    j_dict_list.append(j_dict)
 
-                            j_dict_list.append(j_dict)
-
-        return j_dict_list
+    return j_dict_list
 
 
 def process_json(file_list, processed_max_buffer):

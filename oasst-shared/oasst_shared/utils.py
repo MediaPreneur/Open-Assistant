@@ -12,9 +12,7 @@ def utcnow() -> datetime:
 
 def unaware_to_utc(d: datetime | None) -> datetime:
     """Set timezeno to UTC if datetime is unaware (tzinfo == None)."""
-    if d and d.tzinfo is None:
-        return d.replace(tzinfo=timezone.utc)
-    return d
+    return d.replace(tzinfo=timezone.utc) if d and d.tzinfo is None else d
 
 
 class TimerError(Exception):
@@ -60,6 +58,4 @@ def log_timing(func=None, *, log_kwargs: bool = False, level: int | str = "DEBUG
 
         return wrapped
 
-    if func and callable(func):
-        return decorator(func)
-    return decorator
+    return decorator(func) if func and callable(func) else decorator

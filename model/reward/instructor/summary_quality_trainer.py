@@ -95,10 +95,10 @@ class QualityTrainer(Trainer):
             loss, logits = self._compute_loss(model, inputs)
 
         loss = loss.mean().detach()
-        labels = inputs["labels"]
         if self.args.prediction_loss_only:
             return (loss, None, None)
 
+        labels = inputs["labels"]
         return (loss, logits, labels)
 
 
@@ -120,8 +120,8 @@ if __name__ == "__main__":
         num_layer = training_conf["freeze_layer"]
         model = freeze_top_n_layers(model, num_layer)
         model_parameters = filter(lambda p: p.requires_grad, model.parameters())
-        params = sum([np.prod(p.size()) for p in model_parameters])
-        print("Number of trainable : {}M".format(int(params / 1e6)))
+        params = sum(np.prod(p.size()) for p in model_parameters)
+        print(f"Number of trainable : {int(params / 1000000.0)}M")
 
     args = TrainingArguments(
         output_dir=f"{model_name}-finetuned",

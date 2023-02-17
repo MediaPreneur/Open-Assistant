@@ -21,7 +21,4 @@ class GuildSettings(BaseModel):
         async with conn.cursor() as cursor:
             await cursor.execute("SELECT * FROM guild_settings WHERE guild_id = ?", (guild_id,))
             row = await cursor.fetchone()
-            if row is None:
-                return None
-
-            return cls.parse_obj(row)
+            return None if row is None else cls.parse_obj(row)

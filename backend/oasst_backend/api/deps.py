@@ -32,10 +32,7 @@ def get_api_key(
     api_key_query: str = Security(api_key_query),
     api_key_header: str = Security(api_key_header),
 ) -> str:
-    if api_key_query:
-        return api_key_query
-    else:
-        return api_key_header
+    return api_key_query or api_key_header
 
 
 class FrontendUserId(NamedTuple):
@@ -54,10 +51,7 @@ def get_frontend_user_id(
                 return FrontendUserId(auth_method=v[0], username=v[1])
         return FrontendUserId(auth_method=None, username=None)
 
-    if user_query:
-        return split_user(user_query)
-    else:
-        return split_user(user_header)
+    return split_user(user_query) if user_query else split_user(user_header)
 
 
 def create_api_client(

@@ -81,7 +81,10 @@ class Importer:
     ) -> tuple[MessageTreeState, Message]:
         assert tree.message_tree_id is not None and tree.message_tree_id == tree.prompt.message_id
         root_msg = self.import_message(tree.prompt, message_tree_id=tree.prompt.message_id)
-        assert state == TreeState.BACKLOG_RANKING or state == TreeState.RANKING, f"{state} not supported for import"
+        assert state in [
+            TreeState.BACKLOG_RANKING,
+            TreeState.RANKING,
+        ], f"{state} not supported for import"
         active = state == TreeState.RANKING
         mts = MessageTreeState(
             message_tree_id=root_msg.id,

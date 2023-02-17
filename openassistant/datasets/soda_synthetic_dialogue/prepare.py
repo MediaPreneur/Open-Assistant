@@ -102,7 +102,7 @@ def main(output_dir: str = "data"):
                 theme = theme.replace("PersonY", "another person")
                 theme = theme.replace("being is", "being")
 
-                dialogue = [s2 + ": " + s1 for s1, s2 in zip(dat["dialogue"], dat["speakers"])]
+                dialogue = [f"{s2}: {s1}" for s1, s2 in zip(dat["dialogue"], dat["speakers"])]
 
                 if random.randint(0, 6) == 0:
                     # print("##")

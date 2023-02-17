@@ -60,8 +60,7 @@ class ProsocialDialogue(Dataset):
         self.pairs = []
         for row in dataset:
             prompt = QA_SPECIAL_TOKENS["Question"] + row["context"] + QA_SPECIAL_TOKENS["Answer"]
-            for answer in row["rots"]:
-                self.pairs.append((self.PREFIX + prompt, answer))
+            self.pairs.extend((self.PREFIX + prompt, answer) for answer in row["rots"])
 
     def __len__(self):
         return len(self.pairs)

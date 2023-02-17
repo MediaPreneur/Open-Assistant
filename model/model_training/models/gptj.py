@@ -178,9 +178,6 @@ def get_model(model_name, cache_dir, quantization):
         model = AutoModelForCausalLM.from_pretrained(model_name, cache_dir=cache_dir)
     elif quantization == "8bit":
         raise ValueError("Loading 8-bit model. Use deepspeed instead.")
-        transformers.models.gptj.modeling_gptj.GPTJBlock = GPTJBlock
-        model = AutoModelForCausalLM.from_pretrained(model_name, cache_dir=cache_dir)
-        add_adapters(model)
     else:
         raise ValueError(f"Unknown quantization {quantization}")
 
